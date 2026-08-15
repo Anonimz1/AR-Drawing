@@ -1,0 +1,22 @@
+{
+  "name": "AR Draw - See it. Trace it. Draw it.",
+  "short_name": "AR Draw",
+  "description": "Turn your camera into a digital drawing assistant. Free AR drawing web app.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f19",
+  "theme_color": "#667eea",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["graphics", "productivity", "education"],
+  "screenshots": [],
+  "permissions": ["camera", "storage"],
+  "prefer_related_applications": false
+}

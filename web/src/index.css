@@ -1,0 +1,176 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500;600;700&display=swap');
+
+:root {
+  /* AR Draw - Sunflower Inspired Palette */
+  
+  /* Base - Vintage Paper Tone */
+  --canvas: #F5EBD9;
+  --paper-cream: #F0E6D2;
+  --light-grid: #EBE0CA;
+  --vintage-paper: #F8F3E8;
+  --aged-paper: #EDE4D3;
+  
+  /* Sunflower Colors - More muted vintage */
+  --sunflower-gold: #D4A574;
+  --sunflower-yellow: #E5B887;
+  --sunflower-center: #6B4423;
+  --sunflower-dark: #4A2F1F;
+  --sunflower-soft: rgba(212, 165, 116, 0.15);
+  
+  /* Earth Tones */
+  --warm-earth: #A67C52;
+  --warm-earth-hover: #B8956A;
+  --deep-brown: #5D4037;
+  
+  /* Accent - Leaf Green */
+  --leaf-green: #7CB342;
+  --leaf-green-soft: rgba(124, 179, 66, 0.15);
+  
+  /* Text Hierarchy - Vintage serif feel */
+  --text-primary: #3E2A1E;
+  --text-secondary: #5C4433;
+  --text-muted: #8B7355;
+  --text-inverse: #F8F3E8;
+  
+  /* Drawing Colors */
+  --graphite: #2B2B2B;
+  --sketch-blue: #5B9BD5;
+  
+  /* Vintage brown tones */
+  --brown-dark: #4A2F1F;
+  --brown-mid: #6B4423;
+  --brown-light: #8B6F47;
+  
+  /* Borders & Dividers - Vintage style */
+  --border: rgba(107, 68, 35, 0.25);
+  --border-strong: rgba(107, 68, 35, 0.4);
+  --divider: rgba(139, 111, 71, 0.3);
+  --vintage-border: #9B7F5A;
+  
+  /* Surfaces with Vintage Tone */
+  --surface: #FAF6F0;
+  --surface-raised: #F5F0E6;
+  --surface-overlay: rgba(250, 246, 240, 0.96);
+  
+  /* Vintage card/paper effect */
+  --card-bg: rgba(250, 246, 240, 0.9);
+  --card-border: rgba(107, 68, 35, 0.3);
+  
+  /* Interactive States - Vintage gold */
+  --hover-lift: 0 6px 20px rgba(107, 68, 35, 0.2);
+  --shadow-sm: 0 2px 8px rgba(74, 47, 31, 0.15);
+  --shadow-md: 0 6px 20px rgba(74, 47, 31, 0.2);
+  --shadow-vintage: 0 4px 12px rgba(107, 68, 35, 0.25);
+  
+  /* Spacing System (8px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  
+  /* Typography - Space Grotesk + Inter */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-primary);
+  background-color: var(--canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+body {
+  overscroll-behavior-y: contain;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+.scrollable {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom Scrollbar - Sunflower Theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--light-grid);
+  border-left: 1px solid var(--border);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sunflower-gold);
+  border-radius: 5px;
+  border: 2px solid var(--light-grid);
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sunflower-yellow);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--sunflower-center);
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sunflower-gold) var(--light-grid);
+}
+
+@media (max-width: 768px) {
+  html {
+    height: -webkit-fill-available;
+  }
+
+  body {
+    height: -webkit-fill-available;
+  }
+  
+  /* Thinner scrollbar on mobile */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+}
