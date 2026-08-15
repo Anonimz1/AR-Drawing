@@ -143,10 +143,12 @@ export const useImageTransform = () => {
   }, [isLocked, transform]);
 
   const handleTouchMove = useCallback((e) => {
-    if (isLocked || !isDraggingRef.current) return;
+    if (isLocked) return;
     
     // Prevent default to avoid scrolling
-    e.preventDefault();
+    if (e.touches || e.type === 'touchmove') {
+      e.preventDefault();
+    }
 
     // Handle mouse drag
     if (e.type === 'mousemove' && e.buttons !== 1) {
@@ -158,31 +160,27 @@ export const useImageTransform = () => {
     const touches = e.touches || [{ clientX: e.clientX, clientY: e.clientY }];
     
     if (!touches.length) {
-      isDraggingRef.current = false;
       return;
     }
 
-    if (touches.length === 1 && lastTouchRef.current && initialTransformRef.current) {
+    if (touches.length === 1 && lastTouchRef.current && isDraggingRef.current) {
       // Single finger/mouse drag
-      const deltaX = touches[0].clientX - lastTouchRef.current.x;
-      const deltaY = touches[0].clientY - lastTouchRef.current.y;
+      const currentX = touches[0].clientX;
+      const currentY = touches[0].clientY;
       
-      // Use RAF for smooth updates
-      updateTransform({
-        x: initialTransformRef.current.x + (touches[0].clientX - lastTouchRef.current.x),
-        y: initialTransformRef.current.y + (touches[0].clientY - lastTouchRef.current.y)
-      });
+      const deltaX = currentX - lastTouchRef.current.x;
+      const deltaY = currentY - lastTouchRef.current.y;
       
-      // Update accumulated position
-      initialTransformRef.current = {
-        ...initialTransformRef.current,
-        x: initialTransformRef.current.x + deltaX,
-        y: initialTransformRef.current.y + deltaY
-      };
+      // Direct update for smoother drag
+      setTransform(prev => ({
+        ...prev,
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
       
       lastTouchRef.current = {
-        x: touches[0].clientX,
-        y: touches[0].clientY
+        x: currentX,
+        y: currentY
       };
     } else if (touches.length === 2 && initialTransformRef.current) {
       const touch1 = touches[0];
