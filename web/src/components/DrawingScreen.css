@@ -136,18 +136,61 @@
 }
 
 @media (max-width: 768px) {
+  .drawing-screen {
+    /* Safe area for notch */
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .drawing-top-bar {
+    padding: 0.75rem 0.5rem;
+    /* Safe area insets */
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+
+  .top-btn {
+    width: 36px;
+    height: 36px;
+  }
+
   .info-panel {
     top: 70px;
     right: 0.5rem;
-    max-width: calc(100vw - 1rem);
+    left: 0.5rem;
+    max-width: none;
+    width: auto;
   }
 
   .top-title {
     font-size: 0.875rem;
+    max-width: 50vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .lock-indicator {
     font-size: 0.75rem;
     padding: 0.2rem 0.5rem;
+  }
+
+  .top-actions {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .drawing-top-bar {
+    padding: 0.5rem 0.375rem;
+  }
+
+  .top-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .top-title {
+    font-size: 0.75rem;
   }
 }

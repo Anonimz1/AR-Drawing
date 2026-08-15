@@ -36,6 +36,14 @@ export const CameraView = ({ videoRef, stream, error }) => {
         playsInline
         muted
         className="camera-video"
+        // High-quality video attributes
+        width="1920"
+        height="1080"
+        style={{
+          imageRendering: 'high-quality',
+          WebkitTransform: 'translateZ(0)',
+          transform: 'translateZ(0)'
+        }}
       />
     </div>
   );

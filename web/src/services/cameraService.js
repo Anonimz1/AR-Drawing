@@ -20,12 +20,17 @@ export class CameraService {
   }
 
   static async startStream(constraints = {}) {
+    // High-quality default constraints
     const defaultConstraints = {
       video: {
         facingMode: { ideal: 'environment' },
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        aspectRatio: { ideal: 16/9 }
+        width: { min: 1280, ideal: 1920, max: 4096 },
+        height: { min: 720, ideal: 1080, max: 2160 },
+        frameRate: { min: 24, ideal: 30, max: 60 },
+        aspectRatio: { ideal: 16/9 },
+        focusMode: { ideal: 'continuous' },
+        exposureMode: { ideal: 'continuous' },
+        whiteBalanceMode: { ideal: 'continuous' }
       }
     };
 
@@ -35,19 +40,43 @@ export class CameraService {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia(finalConstraints);
+      
+      // Apply additional quality enhancements
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        const capabilities = videoTrack.getCapabilities();
+        const settings = videoTrack.getSettings();
+        
+        console.log('Camera capabilities:', capabilities);
+        console.log('Current settings:', settings);
+      }
+      
       return { stream, error: null };
     } catch (error) {
       console.error('Camera error:', error);
       
-      // Fallback: try without facingMode
-      if (error.name === 'OverconstrainedError') {
+      // Fallback: try with HD quality
+      if (error.name === 'OverconstrainedError' || error.name === 'NotReadableError') {
         try {
           const fallbackStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1920 }, height: { ideal: 1080 } }
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              frameRate: { ideal: 30 }
+            }
           });
           return { stream: fallbackStream, error: null };
-        } catch {
-          return { stream: null, error: 'Camera not available with requested settings' };
+        } catch (fallbackError) {
+          // Last resort: basic constraints
+          try {
+            const basicStream = await navigator.mediaDevices.getUserMedia({
+              video: true
+            });
+            return { stream: basicStream, error: null };
+          } catch {
+            return { stream: null, error: 'Camera not available' };
+          }
         }
       }
 

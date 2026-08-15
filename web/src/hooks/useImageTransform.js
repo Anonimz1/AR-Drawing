@@ -16,6 +16,30 @@ export const useImageTransform = () => {
   const initialRotationRef = useRef(null);
   const initialTransformRef = useRef(null);
   const isDraggingRef = useRef(false);
+  const rafRef = useRef(null);
+  const pendingTransformRef = useRef(null);
+
+  // Smooth transform update using RAF
+  const updateTransform = useCallback((updates) => {
+    if (isLocked) return;
+    
+    pendingTransformRef.current = updates;
+    
+    if (rafRef.current) {
+      return; // Already scheduled
+    }
+    
+    rafRef.current = requestAnimationFrame(() => {
+      if (pendingTransformRef.current) {
+        setTransform(prev => ({
+          ...prev,
+          ...pendingTransformRef.current
+        }));
+        pendingTransformRef.current = null;
+      }
+      rafRef.current = null;
+    });
+  }, [isLocked]);
 
   const move = useCallback((deltaX, deltaY) => {
     if (isLocked) return;
@@ -77,6 +101,11 @@ export const useImageTransform = () => {
   const handleTouchStart = useCallback((e) => {
     if (isLocked) return;
 
+    // Prevent default for touch to avoid scrolling
+    if (e.type === 'touchstart') {
+      e.preventDefault();
+    }
+
     // Handle both touch and mouse events
     const touches = e.touches || [{ clientX: e.clientX, clientY: e.clientY }];
     
@@ -86,6 +115,7 @@ export const useImageTransform = () => {
         x: touches[0].clientX,
         y: touches[0].clientY
       };
+      initialTransformRef.current = { ...transform };
     } else if (touches.length === 2) {
       isDraggingRef.current = false;
       const touch1 = touches[0];
@@ -113,32 +143,48 @@ export const useImageTransform = () => {
   }, [isLocked, transform]);
 
   const handleTouchMove = useCallback((e) => {
-    if (isLocked) return;
+    if (isLocked || !isDraggingRef.current) return;
     
-    // Prevent default to avoid scrolling while dragging
-    if (isDraggingRef.current || (e.touches && e.touches.length > 1)) {
-      e.preventDefault();
-    }
+    // Prevent default to avoid scrolling
+    e.preventDefault();
 
-    // Handle both touch and mouse events
-    const touches = e.touches || (e.buttons === 1 ? [{ clientX: e.clientX, clientY: e.clientY }] : []);
-    
-    if (!touches.length && !e.buttons) {
+    // Handle mouse drag
+    if (e.type === 'mousemove' && e.buttons !== 1) {
       isDraggingRef.current = false;
       return;
     }
 
-    if (touches.length === 1 && lastTouchRef.current && isDraggingRef.current) {
+    // Handle both touch and mouse events
+    const touches = e.touches || [{ clientX: e.clientX, clientY: e.clientY }];
+    
+    if (!touches.length) {
+      isDraggingRef.current = false;
+      return;
+    }
+
+    if (touches.length === 1 && lastTouchRef.current && initialTransformRef.current) {
+      // Single finger/mouse drag
       const deltaX = touches[0].clientX - lastTouchRef.current.x;
       const deltaY = touches[0].clientY - lastTouchRef.current.y;
       
-      move(deltaX, deltaY);
+      // Use RAF for smooth updates
+      updateTransform({
+        x: initialTransformRef.current.x + (touches[0].clientX - lastTouchRef.current.x),
+        y: initialTransformRef.current.y + (touches[0].clientY - lastTouchRef.current.y)
+      });
+      
+      // Update accumulated position
+      initialTransformRef.current = {
+        ...initialTransformRef.current,
+        x: initialTransformRef.current.x + deltaX,
+        y: initialTransformRef.current.y + deltaY
+      };
       
       lastTouchRef.current = {
         x: touches[0].clientX,
         y: touches[0].clientY
       };
-    } else if (touches.length === 2) {
+    } else if (touches.length === 2 && initialTransformRef.current) {
       const touch1 = touches[0];
       const touch2 = touches[1];
       
@@ -147,13 +193,13 @@ export const useImageTransform = () => {
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       );
-      if (initialDistanceRef.current && initialTransformRef.current) {
+      
+      let updates = {};
+      
+      if (initialDistanceRef.current) {
         const scaleChange = distance / initialDistanceRef.current;
         const newScale = initialTransformRef.current.scale * scaleChange;
-        setTransform(prev => ({
-          ...prev,
-          scale: Math.max(0.1, Math.min(10, newScale))
-        }));
+        updates.scale = Math.max(0.1, Math.min(10, newScale));
       }
       
       // Two finger rotation
@@ -161,32 +207,57 @@ export const useImageTransform = () => {
         touch2.clientY - touch1.clientY,
         touch2.clientX - touch1.clientX
       ) * 180 / Math.PI;
-      if (initialRotationRef.current !== null && initialTransformRef.current) {
+      
+      if (initialRotationRef.current !== null) {
         const rotationChange = angle - initialRotationRef.current;
-        setTransform(prev => ({
-          ...prev,
-          rotation: (initialTransformRef.current.rotation + rotationChange) % 360
-        }));
+        updates.rotation = (initialTransformRef.current.rotation + rotationChange) % 360;
       }
       
       // Two finger drag
       const centerX = (touch1.clientX + touch2.clientX) / 2;
       const centerY = (touch1.clientY + touch2.clientY) / 2;
+      
       if (lastTouchRef.current) {
         const deltaX = centerX - lastTouchRef.current.x;
         const deltaY = centerY - lastTouchRef.current.y;
-        move(deltaX, deltaY);
+        updates.x = initialTransformRef.current.x + deltaX;
+        updates.y = initialTransformRef.current.y + deltaY;
       }
+      
+      updateTransform(updates);
       lastTouchRef.current = { x: centerX, y: centerY };
     }
-  }, [isLocked, move]);
+  }, [isLocked, updateTransform]);
 
-  const handleTouchEnd = useCallback(() => {
+  const handleTouchEnd = useCallback((e) => {
+    // Only reset if all touches are gone
+    if (e.touches && e.touches.length > 0) {
+      // Still have touches, update refs
+      if (e.touches.length === 1) {
+        lastTouchRef.current = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        };
+        isDraggingRef.current = true;
+        initialTransformRef.current = { ...transform };
+      }
+      return;
+    }
+    
     isDraggingRef.current = false;
     lastTouchRef.current = null;
     initialDistanceRef.current = null;
     initialRotationRef.current = null;
     initialTransformRef.current = null;
+  }, [transform]);
+
+  // Cleanup RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, []);
 
   // Add passive event listener for better performance

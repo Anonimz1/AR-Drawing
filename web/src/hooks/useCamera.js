@@ -19,15 +19,53 @@ export const useCamera = () => {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
 
+      // High-quality camera constraints
       const constraints = {
         video: {
           facingMode: { ideal: preferredFacingMode },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { min: 1280, ideal: 1920, max: 4096 },
+          height: { min: 720, ideal: 1080, max: 2160 },
+          frameRate: { min: 24, ideal: 30, max: 60 },
+          aspectRatio: { ideal: 16/9 },
+          // Advanced quality settings
+          focusMode: { ideal: 'continuous' },
+          exposureMode: { ideal: 'continuous' },
+          whiteBalanceMode: { ideal: 'continuous' }
         }
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      // Apply additional quality settings to video track
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      if (videoTrack) {
+        const trackCapabilities = videoTrack.getCapabilities();
+        setCapabilities(trackCapabilities);
+        
+        // Try to apply advanced constraints if supported
+        const advancedConstraints = {};
+        
+        if (trackCapabilities.focusMode && trackCapabilities.focusMode.includes('continuous')) {
+          advancedConstraints.focusMode = 'continuous';
+        }
+        
+        if (trackCapabilities.exposureMode && trackCapabilities.exposureMode.includes('continuous')) {
+          advancedConstraints.exposureMode = 'continuous';
+        }
+        
+        if (trackCapabilities.whiteBalanceMode && trackCapabilities.whiteBalanceMode.includes('continuous')) {
+          advancedConstraints.whiteBalanceMode = 'continuous';
+        }
+        
+        if (Object.keys(advancedConstraints).length > 0) {
+          try {
+            await videoTrack.applyConstraints({ advanced: [advancedConstraints] });
+          } catch (err) {
+            console.log('Could not apply advanced constraints:', err);
+          }
+        }
+      }
+      
       streamRef.current = mediaStream;
       setStream(mediaStream);
       setFacingMode(preferredFacingMode);
@@ -36,20 +74,37 @@ export const useCamera = () => {
         videoRef.current.srcObject = mediaStream;
       }
 
-      // Get camera capabilities
-      const videoTrack = mediaStream.getVideoTracks()[0];
-      if (videoTrack) {
-        const trackCapabilities = videoTrack.getCapabilities();
-        setCapabilities(trackCapabilities);
-      }
-
       setIsLoading(false);
       return mediaStream;
     } catch (err) {
       console.error('Camera error:', err);
-      setError(err.message || 'Failed to access camera');
-      setIsLoading(false);
-      return null;
+      
+      // Fallback to basic HD if high quality fails
+      try {
+        const fallbackConstraints = {
+          video: {
+            facingMode: { ideal: preferredFacingMode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 }
+          }
+        };
+        
+        const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+        streamRef.current = fallbackStream;
+        setStream(fallbackStream);
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = fallbackStream;
+        }
+        
+        setIsLoading(false);
+        return fallbackStream;
+      } catch (fallbackErr) {
+        setError(fallbackErr.message || 'Failed to access camera');
+        setIsLoading(false);
+        return null;
+      }
     }
   }, []);
 

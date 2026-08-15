@@ -7,10 +7,15 @@
   pointer-events: auto;
   z-index: 2;
   touch-action: none;
-  cursor: move;
+  cursor: grab;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reference-overlay:active {
+  cursor: grabbing;
 }
 
 .reference-overlay.interactive {
@@ -22,4 +27,5 @@
   height: 100%;
   touch-action: none;
   pointer-events: none;
+  will-change: transform;
 }

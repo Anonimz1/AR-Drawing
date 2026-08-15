@@ -5,6 +5,7 @@ import './HomeScreen.css';
 
 export const HomeScreen = ({ onOpenLibrary, onImportImage, onStartDrawing }) => {
   const [mockOpacity, setMockOpacity] = useState(100);
+  const [activeCategory, setActiveCategory] = useState('architecture');
   const mainRef = useRef(null);
 
   useEffect(() => {
@@ -88,15 +89,24 @@ export const HomeScreen = ({ onOpenLibrary, onImportImage, onStartDrawing }) => 
 
         {/* Categories / Actions (Image 3 bottom) */}
         <section className="categories-section">
-          <div className="category-card reveal">
+          <div
+            className={`category-card reveal${activeCategory === 'botanical' ? ' active' : ''}`}
+            onClick={() => setActiveCategory('botanical')}
+          >
             <Flower2 className="cat-icon" size={32} />
             <span>Botanical</span>
           </div>
-          <div className="category-card active reveal">
+          <div
+            className={`category-card reveal${activeCategory === 'architecture' ? ' active' : ''}`}
+            onClick={() => setActiveCategory('architecture')}
+          >
             <Landmark className="cat-icon" size={32} />
             <span>Architecture</span>
           </div>
-          <div className="category-card reveal">
+          <div
+            className={`category-card reveal${activeCategory === 'portraits' ? ' active' : ''}`}
+            onClick={() => setActiveCategory('portraits')}
+          >
             <User className="cat-icon" size={32} />
             <span>Portraits</span>
           </div>

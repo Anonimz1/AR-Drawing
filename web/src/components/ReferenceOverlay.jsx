@@ -22,23 +22,35 @@ export const ReferenceOverlay = ({
     
     if (!canvas || !image || !image.complete) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { 
+      alpha: true,
+      desynchronized: true // Better performance
+    });
+    
+    if (!ctx) return;
+    
     const dpr = window.devicePixelRatio || 1;
     
     // Set canvas size to match container
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    const width = rect.width;
+    const height = rect.height;
     
+    if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+    }
+    
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
     ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, width, height);
     
     // Save context state
     ctx.save();
     
     // Apply transforms from center
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    const centerX = width / 2;
+    const centerY = height / 2;
     
     ctx.translate(centerX + transform.x, centerY + transform.y);
     ctx.rotate((transform.rotation * Math.PI) / 180);
@@ -52,13 +64,15 @@ export const ReferenceOverlay = ({
     const imgWidth = sourceCanvas.width || image.naturalWidth;
     const imgHeight = sourceCanvas.height || image.naturalHeight;
     
-    ctx.drawImage(
-      sourceCanvas,
-      -imgWidth / 2,
-      -imgHeight / 2,
-      imgWidth,
-      imgHeight
-    );
+    if (imgWidth > 0 && imgHeight > 0) {
+      ctx.drawImage(
+        sourceCanvas,
+        -imgWidth / 2,
+        -imgHeight / 2,
+        imgWidth,
+        imgHeight
+      );
+    }
     
     ctx.restore();
   }, [transform]);
@@ -131,6 +145,7 @@ export const ReferenceOverlay = ({
       onMouseDown={onTouchStart}
       onMouseMove={onTouchMove}
       onMouseUp={onTouchEnd}
+      onMouseLeave={onTouchEnd}
     >
       <canvas ref={canvasRef} className="reference-canvas" />
     </div>
