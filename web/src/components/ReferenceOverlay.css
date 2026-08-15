@@ -12,6 +12,13 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+  /* Promote to its own compositor layer so dragging (transform) never
+     forces layout/paint of surrounding elements — this is the biggest
+     lever for eliminating choppy drag. */
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 .reference-overlay:active {
