@@ -24,12 +24,14 @@ export const ReferenceOverlay = ({
 
     const ctx = canvas.getContext('2d', { 
       alpha: true,
-      desynchronized: true // Better performance
+      desynchronized: true,
+      willReadFrequently: false
     });
     
     if (!ctx) return;
     
-    const dpr = window.devicePixelRatio || 1;
+    // Use lower DPR on mobile for better performance
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     
     // Set canvas size to match container
     const rect = canvas.getBoundingClientRect();
@@ -41,7 +43,7 @@ export const ReferenceOverlay = ({
       canvas.height = height * dpr;
     }
     
-    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, width, height);
     
