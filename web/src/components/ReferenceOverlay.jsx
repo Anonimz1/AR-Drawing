@@ -98,17 +98,21 @@ export const ReferenceOverlay = ({
   useEffect(() => {
     if (!imageRef.current || !imageRef.current.complete) return;
 
-    const processFilter = async () => {
-      try {
-        const filtered = ImageProcessor.applyFilter(imageRef.current, filter);
-        filteredCanvasRef.current = filtered;
-        renderImage();
-      } catch (error) {
-        console.error('Filter error:', error);
-      }
-    };
+    if (!filter || filter === 'original') {
+      filteredCanvasRef.current = null;
+      renderImage();
+      return;
+    }
 
-    processFilter();
+    try {
+      const filtered = ImageProcessor.applyFilter(imageRef.current, filter);
+      filteredCanvasRef.current = filtered;
+      renderImage();
+    } catch (error) {
+      console.error('Filter error:', error);
+      filteredCanvasRef.current = null;
+      renderImage();
+    }
   }, [filter, renderImage]);
 
   // Redraw on transform changes
@@ -121,14 +125,25 @@ export const ReferenceOverlay = ({
     if (!imageUrl) return;
 
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      img.crossOrigin = 'anonymous';
+    }
     img.onload = () => {
       imageRef.current = img;
-      filteredCanvasRef.current = null;
-      renderImage();
+      if (!filter || filter === 'original') {
+        filteredCanvasRef.current = null;
+        renderImage();
+      } else {
+        try {
+          filteredCanvasRef.current = ImageProcessor.applyFilter(img, filter);
+        } catch {
+          filteredCanvasRef.current = null;
+        }
+        renderImage();
+      }
     };
     img.src = imageUrl;
-  }, [imageUrl, renderImage]);
+  }, [imageUrl, filter, renderImage]);
 
   // Handle resize
   useEffect(() => {
