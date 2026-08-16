@@ -19,9 +19,11 @@ export const DrawingScreen = ({ imageUrl, imageName, onClose, onCapture }) => {
     flipVertical,
     reset,
     toggleLock,
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerCancel,
+    handleWheel
   } = useImageTransform();
 
   const [opacity, setOpacity] = useState(0.5);
@@ -75,9 +77,11 @@ export const DrawingScreen = ({ imageUrl, imageName, onClose, onCapture }) => {
           opacity={opacity}
           transform={transform}
           filter={filter}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
+          onWheel={handleWheel}
           ref={overlayRef}
         />
       )}
@@ -86,7 +90,11 @@ export const DrawingScreen = ({ imageUrl, imageName, onClose, onCapture }) => {
       <GridOverlay show={showGrid} type="square" opacity={0.3} size={50} />
 
       {/* Top Bar */}
-      <div className="drawing-top-bar">
+      <div
+        className="drawing-top-bar"
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         <button className="top-btn" onClick={onClose} title="Close">
           <X size={24} />
         </button>
@@ -118,13 +126,17 @@ export const DrawingScreen = ({ imageUrl, imageName, onClose, onCapture }) => {
 
       {/* Info Panel */}
       {showInfo && (
-        <div className="info-panel">
-          <h4>Gestures</h4>
+        <div
+          className="info-panel"
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          <h4>Gestures & Controls</h4>
           <ul>
-            <li>1 finger drag → Move</li>
+            <li>1 finger / mouse drag → Move</li>
             <li>2 fingers pinch → Zoom</li>
             <li>2 fingers rotate → Rotate</li>
-            <li>2 fingers drag → Move</li>
+            <li>Mouse wheel / trackpad → Zoom</li>
             <li>Double tap → Reset</li>
           </ul>
           <p className="info-tip">

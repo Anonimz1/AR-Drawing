@@ -7,9 +7,11 @@ export const ReferenceOverlay = ({
   opacity,
   transform,
   filter,
-  onTouchStart,
-  onTouchMove,
-  onTouchEnd
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
+  onWheel
 }) => {
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
@@ -29,7 +31,7 @@ export const ReferenceOverlay = ({
     
     if (!ctx) return;
     
-    // Use lower DPR on mobile for better performance
+    // DPR for crisp rendering
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     
     const rect = canvas.getBoundingClientRect();
@@ -47,10 +49,15 @@ export const ReferenceOverlay = ({
     
     ctx.save();
     
-    // Only apply rotation and scale to canvas
-    // Position (x, y) will be handled by CSS transform
+    // Safe visible viewport calculations (accounting for top bar & bottom controls)
+    const topBarHeight = 70;
+    const bottomControlsHeight = 180;
+    const availableH = Math.max(200, height - topBarHeight - bottomControlsHeight);
+    const availableW = Math.max(200, width - 48);
+    
+    // Center point in visible viewport
     const centerX = width / 2;
-    const centerY = height / 2;
+    const centerY = topBarHeight + availableH / 2;
     
     ctx.translate(centerX, centerY);
     ctx.rotate((transform.rotation * Math.PI) / 180);
@@ -60,16 +67,27 @@ export const ReferenceOverlay = ({
     );
     
     const sourceCanvas = filteredCanvasRef.current || image;
-    const imgWidth = sourceCanvas.width || image.naturalWidth;
-    const imgHeight = sourceCanvas.height || image.naturalHeight;
+    const naturalW = sourceCanvas.width || image.naturalWidth;
+    const naturalH = sourceCanvas.height || image.naturalHeight;
     
-    if (imgWidth > 0 && imgHeight > 0) {
+    if (naturalW > 0 && naturalH > 0) {
+      // Comfortable baseline size (70% of available workspace area)
+      const maxW = availableW * 0.7;
+      const maxH = availableH * 0.7;
+      const aspect = naturalW / naturalH;
+      let drawW = maxW;
+      let drawH = maxW / aspect;
+      if (drawH > maxH) {
+        drawH = maxH;
+        drawW = maxH * aspect;
+      }
+
       ctx.drawImage(
         sourceCanvas,
-        -imgWidth / 2,
-        -imgHeight / 2,
-        imgWidth,
-        imgHeight
+        -drawW / 2,
+        -drawH / 2,
+        drawW,
+        drawH
       );
     }
     
@@ -93,8 +111,7 @@ export const ReferenceOverlay = ({
     processFilter();
   }, [filter, renderImage]);
 
-  // Handle transform changes - Only redraw for rotation/scale/flip
-  // Position (x,y) handled by CSS transform
+  // Redraw on transform changes
   useEffect(() => {
     renderImage();
   }, [renderImage]);
@@ -123,13 +140,22 @@ export const ReferenceOverlay = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [renderImage]);
 
-  // Apply x/y position directly to the DOM instead of through JSX's
-  // `style` prop. useLayoutEffect fires synchronously right after React
-  // commits, before the browser paints — so the position is always in
-  // sync with the latest touch/mouse event with zero extra frame delay.
-  // Writing straight to node.style also skips React's style-object
-  // diffing on every drag tick, which is a big part of what causes
-  // "patah-patah" dragging when this fires dozens of times per second.
+  // Non-passive wheel event listener for trackpad & mouse wheel zoom
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node || !onWheel) return;
+
+    const handleWheelEvent = (e) => {
+      onWheel(e);
+    };
+
+    node.addEventListener('wheel', handleWheelEvent, { passive: false });
+    return () => {
+      node.removeEventListener('wheel', handleWheelEvent);
+    };
+  }, [onWheel]);
+
+  // Hardware-accelerated smooth translate
   useLayoutEffect(() => {
     const node = containerRef.current;
     if (!node) return;
@@ -141,13 +167,10 @@ export const ReferenceOverlay = ({
       ref={containerRef}
       className="reference-overlay"
       style={{ opacity }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onMouseDown={onTouchStart}
-      onMouseMove={onTouchMove}
-      onMouseUp={onTouchEnd}
-      onMouseLeave={onTouchEnd}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
     >
       <canvas ref={canvasRef} className="reference-canvas" />
     </div>

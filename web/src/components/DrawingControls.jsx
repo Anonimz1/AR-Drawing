@@ -17,9 +17,9 @@ import {
   EyeOff,
   ZoomIn,
   ZoomOut,
-  Move,
   Minimize2,
-  RotateCcw
+  RotateCcw,
+  X
 } from 'lucide-react';
 import './DrawingControls.css';
 
@@ -57,32 +57,45 @@ export const DrawingControls = ({
 
   return (
     <>
-      {/* Bottom Toolbar */}
-      <div className={`drawing-controls ${expanded ? 'expanded' : ''} ${!controlsVisible ? 'controls-hidden' : ''}`}>
-        {/* Toggle Visibility Button */}
-        <button
-          className="toggle-visibility-btn"
-          onClick={() => setControlsVisible(!controlsVisible)}
-          aria-label={controlsVisible ? 'Hide controls' : 'Show controls'}
-          title={controlsVisible ? 'Hide controls' : 'Show controls'}
-        >
-          {controlsVisible ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
+      {/* Floating Toggle Visibility FAB */}
+      <button
+        className={`toggle-visibility-fab ${!controlsVisible ? 'floating-hidden' : ''}`}
+        onClick={() => setControlsVisible(!controlsVisible)}
+        onPointerDown={(e) => e.stopPropagation()}
+        aria-label={controlsVisible ? 'Hide controls' : 'Show controls'}
+        title={controlsVisible ? 'Hide controls' : 'Show controls'}
+      >
+        {controlsVisible ? <EyeOff size={20} /> : <Eye size={20} />}
+        {!controlsVisible && <span className="fab-label">Controls</span>}
+      </button>
 
+      {/* Bottom Toolbar */}
+      <div
+        className={`drawing-controls ${expanded ? 'expanded' : ''} ${!controlsVisible ? 'controls-hidden' : ''}`}
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         {controlsVisible && (
           <>
-            <div className="controls-header">
-              <button
-                className="expand-button"
-                onClick={() => setExpanded(!expanded)}
-                aria-label={expanded ? 'Collapse' : 'Expand'}
-              >
-                {expanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-              </button>
+            {/* Expand / Collapse Header Handle */}
+            <div
+              className="controls-header"
+              onClick={() => setExpanded(!expanded)}
+              role="button"
+              tabIndex={0}
+              aria-label={expanded ? 'Show basic controls' : 'Show more controls'}
+            >
+              <div className="expand-handle">
+                <span className="handle-bar"></span>
+                <div className="handle-content">
+                  {expanded ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                  <span className="handle-text">{expanded ? 'Less Controls' : 'More Controls'}</span>
+                </div>
+              </div>
             </div>
 
             <div className="controls-content">
-              {/* Primary Controls */}
+              {/* Opacity Slider */}
               <div className="control-group">
                 <label className="control-label">
                   <Droplet size={18} />
@@ -95,12 +108,13 @@ export const DrawingControls = ({
                   step="0.05"
                   value={opacity}
                   onChange={(e) => onOpacityChange(parseFloat(e.target.value))}
-                  className="control-slider"
+                  className="control-slider opacity-slider"
                   disabled={isLocked}
                 />
                 <span className="control-value">{Math.round(opacity * 100)}%</span>
               </div>
 
+              {/* Scale Controls */}
               <div className="control-group">
                 <label className="control-label">
                   <Maximize2 size={18} />
@@ -109,9 +123,10 @@ export const DrawingControls = ({
                 <div className="scale-controls">
                   <button
                     className="zoom-btn"
-                    onClick={() => onZoom(-0.2)}
+                    onClick={() => onZoom(-0.15)}
                     disabled={isLocked || transform.scale <= 0.1}
                     title="Zoom Out"
+                    aria-label="Zoom Out"
                   >
                     <ZoomOut size={18} />
                   </button>
@@ -119,17 +134,18 @@ export const DrawingControls = ({
                     type="range"
                     min="0.1"
                     max="5"
-                    step="0.1"
+                    step="0.05"
                     value={transform.scale}
                     onChange={(e) => onZoom(parseFloat(e.target.value) - transform.scale)}
-                    className="control-slider"
+                    className="control-slider scale-slider"
                     disabled={isLocked}
                   />
                   <button
                     className="zoom-btn"
-                    onClick={() => onZoom(0.2)}
+                    onClick={() => onZoom(0.15)}
                     disabled={isLocked || transform.scale >= 5}
                     title="Zoom In"
+                    aria-label="Zoom In"
                   >
                     <ZoomIn size={18} />
                   </button>
@@ -137,9 +153,10 @@ export const DrawingControls = ({
                 <span className="control-value">{Math.round(transform.scale * 100)}%</span>
               </div>
 
-              {/* Transform Buttons */}
+              {/* Expanded Extra Controls */}
               {expanded && (
                 <>
+                  {/* Rotation & Flip */}
                   <div className="control-buttons">
                     <button
                       className="control-btn"
@@ -147,7 +164,8 @@ export const DrawingControls = ({
                       disabled={isLocked}
                       title="Rotate 90° Clockwise"
                     >
-                      <RotateCw size={20} />
+                      <RotateCw size={18} />
+                      <span className="btn-label">+90°</span>
                     </button>
                     <button
                       className="control-btn"
@@ -155,7 +173,8 @@ export const DrawingControls = ({
                       disabled={isLocked}
                       title="Rotate 90° Counter-Clockwise"
                     >
-                      <RotateCcw size={20} />
+                      <RotateCcw size={18} />
+                      <span className="btn-label">-90°</span>
                     </button>
                     <button
                       className="control-btn"
@@ -163,7 +182,8 @@ export const DrawingControls = ({
                       disabled={isLocked}
                       title="Flip Horizontal"
                     >
-                      <FlipHorizontal size={20} />
+                      <FlipHorizontal size={18} />
+                      <span className="btn-label">Flip H</span>
                     </button>
                     <button
                       className="control-btn"
@@ -171,7 +191,8 @@ export const DrawingControls = ({
                       disabled={isLocked}
                       title="Flip Vertical"
                     >
-                      <FlipVertical size={20} />
+                      <FlipVertical size={18} />
+                      <span className="btn-label">Flip V</span>
                     </button>
                   </div>
 
@@ -217,25 +238,22 @@ export const DrawingControls = ({
                     </div>
                   </div>
 
-                  <div className="control-buttons">
+                  {/* Secondary Actions */}
+                  <div className="control-buttons secondary-actions">
                     <button
-                      className="control-btn"
+                      className="control-btn reset-btn"
                       onClick={onReset}
                       title="Reset All Transforms"
                     >
-                      <RefreshCw size={20} />
+                      <RefreshCw size={18} />
                       <span className="btn-label">Reset</span>
                     </button>
-                  </div>
-
-                  {/* Additional Controls */}
-                  <div className="control-buttons">
                     <button
                       className={`control-btn ${showGrid ? 'active' : ''}`}
                       onClick={onToggleGrid}
                       title="Toggle Grid Overlay"
                     >
-                      <GridIcon size={20} />
+                      <GridIcon size={18} />
                       <span className="btn-label">Grid</span>
                     </button>
                     <button
@@ -243,7 +261,7 @@ export const DrawingControls = ({
                       onClick={() => setShowFilters(!showFilters)}
                       title="Image Filters"
                     >
-                      <Palette size={20} />
+                      <Palette size={18} />
                       <span className="btn-label">Filters</span>
                     </button>
                   </div>
@@ -251,33 +269,46 @@ export const DrawingControls = ({
               )}
             </div>
 
-            {/* Action Buttons */}
+            {/* Bottom Actions Bar (Lock & Capture) */}
             <div className="control-actions">
               <button
-                className={`control-btn lock-btn ${isLocked ? 'locked' : ''}`}
+                className={`control-btn lock-btn ${isLocked ? 'locked' : 'unlocked'}`}
                 onClick={onToggleLock}
-                title={isLocked ? 'Unlock' : 'Lock'}
+                title={isLocked ? 'Unlock transform' : 'Lock transform'}
+                aria-label={isLocked ? 'Unlock transform' : 'Lock transform'}
               >
                 {isLocked ? <Lock size={20} /> : <Unlock size={20} />}
+                <span className="action-btn-text">{isLocked ? 'Locked' : 'Lock'}</span>
               </button>
               <button
                 className="control-btn capture-btn"
                 onClick={onCapture}
-                title="Capture"
+                title="Capture & Save Artwork"
+                aria-label="Capture & Save Artwork"
               >
                 <Camera size={20} />
+                <span className="action-btn-text">Capture</span>
               </button>
             </div>
           </>
         )}
       </div>
 
-      {/* Filter Panel */}
+      {/* Filter Panel Modal */}
       {showFilters && (
-        <div className="filter-panel">
+        <div
+          className="filter-panel"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <div className="filter-header">
-            <h3>Effects</h3>
-            <button onClick={() => setShowFilters(false)}>✕</button>
+            <h3>Image Filters</h3>
+            <button
+              className="filter-close-btn"
+              onClick={() => setShowFilters(false)}
+              aria-label="Close filters"
+            >
+              <X size={20} />
+            </button>
           </div>
           <div className="filter-grid">
             {filters.map(f => (
